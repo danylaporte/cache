@@ -220,15 +220,37 @@ where
     /// assert_eq!(cache.get(&1), Some(&1)); // value 1 is still there.
     /// ```
     pub fn remove_untouched(&mut self) {
+        self.remove_untouched_if(|_, _| true)
+    }
+
+    /// Removes all items that have not been accessed since the last call
+    /// of this method an that match the if cond.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cache::Cache;
+    ///
+    /// let mut cache = Cache::new();
+    /// cache.insert(1, 1); // value 1 touched.
+    /// cache.insert(2, 2); // value 2 touched.
+    /// cache.remove_untouched();
+    ///
+    /// cache.remove_untouched_if(|_k, v| *v > 1);
+    /// assert_eq!(cache.get(&2), None); // value 2 is now removed.
+    /// assert_eq!(cache.get(&1), Some(&1)); // value 1 is still there.
+    /// ```
+    pub fn remove_untouched_if<F>(&mut self, mut cond: F)
+    where
+        F: FnMut(&K, &mut V) -> bool,
+    {
         let lru = *self.lru.get_mut();
         let remove_touched = self.remove_touched;
 
-        if remove_touched == lru {
-            self.map.clear();
-        } else {
-            self.map.retain(|_, r| *r.lru.get_mut() >= remove_touched);
-            self.remove_touched = lru;
-        }
+        self.map
+            .retain(|k, r| *r.lru.get_mut() >= remove_touched || !cond(k, &mut r.val));
+
+        self.remove_touched = lru;
     }
 
     pub fn retain<F>(&mut self, mut f: F)
