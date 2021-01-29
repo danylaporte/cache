@@ -1,4 +1,6 @@
+mod arc_hash_set;
 mod atomic_ext;
+mod cache_dedup;
 
 use crate::atomic_ext::AtomicU64Ext;
 use paged::PagedIterExt;
@@ -12,6 +14,9 @@ use std::{
     ops::RangeInclusive,
     sync::atomic::AtomicU64,
 };
+
+pub use arc_hash_set::ArcHashSet;
+pub use cache_dedup::CacheDedup;
 
 pub struct Cache<K, V, S = RandomState> {
     capacity: RangeInclusive<usize>,
