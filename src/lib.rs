@@ -25,10 +25,7 @@ pub struct Cache<K, V, S = RandomState> {
     remove_touched: u64,
 }
 
-impl<K, V> Cache<K, V, RandomState>
-where
-    K: Clone + Eq + Hash,
-{
+impl<K, V> Cache<K, V, RandomState> {
     pub fn new() -> Self {
         Self::with_capacity(usize::MAX..=usize::MAX)
     }
@@ -91,7 +88,7 @@ impl<K, V, S> Cache<K, V, S> {
 
 impl<K, V, S> Cache<K, V, S>
 where
-    K: Clone + Eq + Hash,
+    K: Eq + Hash,
     S: BuildHasher,
 {
     pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
@@ -142,7 +139,10 @@ where
     /// assert_eq!(cache.get(&0), Some(&0));
     /// assert_eq!(cache.get(&1), None);
     /// ```
-    pub fn insert(&mut self, key: K, val: V) -> Option<V> {
+    pub fn insert(&mut self, key: K, val: V) -> Option<V>
+    where
+        K: Clone,
+    {
         let lru = self.lru.inc_mut();
 
         if let Some(item) = self.map.get_mut(&key) {
@@ -160,7 +160,10 @@ where
         None
     }
 
-    fn optimize_capacity(&mut self) {
+    fn optimize_capacity(&mut self)
+    where
+        K: Clone,
+    {
         let end = *self.capacity.end();
 
         if self.map.len() >= end {
@@ -180,7 +183,10 @@ where
         self.map.remove(key).map(|r| r.val)
     }
 
-    pub fn remove_lru(&mut self, remove_count: usize) {
+    pub fn remove_lru(&mut self, remove_count: usize)
+    where
+        K: Clone,
+    {
         let remove_count = min(self.map.len(), remove_count);
 
         if remove_count > 1 {
@@ -286,7 +292,10 @@ where
     /// assert!(cache.get(&1).is_none());
     /// assert!(cache.get(&2).is_some());
     /// ```
-    pub fn set_capacity(&mut self, capacity: RangeInclusive<usize>) {
+    pub fn set_capacity(&mut self, capacity: RangeInclusive<usize>)
+    where
+        K: Clone,
+    {
         self.capacity = capacity;
         self.optimize_capacity();
     }
