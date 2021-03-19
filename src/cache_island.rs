@@ -7,7 +7,24 @@ struct CacheIslandInternal<T> {
     value: T,
 }
 
+impl<T> CacheIslandInternal<T> {
+    fn with_value(value: T) -> Self {
+        Self {
+            age: AtomicU64::new(CACHE_ISLAND_AGE.fetch_add(1, Relaxed)),
+            value,
+        }
+    }
+}
+
 impl<T> CacheIsland<T> {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn with_value(value: T) -> Self {
+        Self(Some(CacheIslandInternal::with_value(value)))
+    }
+
     pub fn clear(&mut self) {
         self.0 = None;
     }
@@ -29,10 +46,7 @@ impl<T> CacheIsland<T> {
     }
 
     pub fn set(&mut self, value: T) {
-        self.0 = Some(CacheIslandInternal {
-            age: AtomicU64::new(CACHE_ISLAND_AGE.fetch_add(1, Relaxed)),
-            value,
-        })
+        self.0 = Some(CacheIslandInternal::with_value(value))
     }
 }
 
@@ -42,10 +56,7 @@ where
 {
     fn clone(&self) -> Self {
         Self(match self.0.as_ref() {
-            Some(v) => Some(CacheIslandInternal {
-                age: AtomicU64::new(CACHE_ISLAND_AGE.fetch_add(1, Relaxed)),
-                value: v.value.clone(),
-            }),
+            Some(v) => Some(CacheIslandInternal::with_value(v.value.clone())),
             None => None,
         })
     }

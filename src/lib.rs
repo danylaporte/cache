@@ -1,8 +1,8 @@
 mod atomic_ext;
 mod cache_island;
+mod util;
 
 use crate::atomic_ext::AtomicU64Ext;
-use paged::PagedIterExt;
 use std::{
     borrow::Borrow,
     cmp::{max, min},
@@ -15,6 +15,7 @@ use std::{
 };
 
 pub use cache_island::CacheIsland;
+pub use util::find_lru_item_to_remove;
 
 pub struct Cache<K, V, S = RandomState> {
     capacity: RangeInclusive<usize>,
@@ -187,26 +188,15 @@ where
     {
         let remove_count = min(self.map.len(), remove_count);
 
-        if remove_count > 1 {
-            let page = self
-                .map
-                .iter_mut()
-                .map(|(k, rec)| (k.clone(), *rec.lru.get_mut()))
-                .page_by_key(remove_count, |(_, lru)| *lru);
+        let it = self
+            .map
+            .iter_mut()
+            .map(|(k, rec)| (k.clone(), *rec.lru.get_mut()));
 
-            for (k, _) in &page {
-                self.map.remove(k);
-            }
-        } else if remove_count == 1 {
-            let key = self
-                .map
-                .iter_mut()
-                .map(|(k, rec)| (k, *rec.lru.get_mut()))
-                .min_by_key(|(_, lru)| *lru)
-                .map(|(key, _)| key.clone())
-                .expect("gc failed key");
+        let page = find_lru_item_to_remove(it, remove_count, |(_, lru)| *lru);
 
-            self.map.remove(&key);
+        for (k, _) in &page {
+            self.map.remove(k);
         }
     }
 
