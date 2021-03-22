@@ -45,6 +45,16 @@ impl<T> CacheIsland<T> {
         }
     }
 
+    pub fn get_mut(&mut self) -> Option<&mut T> {
+        match self.0.as_mut() {
+            Some(v) => {
+                v.age.store(CACHE_ISLAND_AGE.fetch_add(1, Relaxed), Relaxed);
+                Some(&mut v.value)
+            }
+            None => None,
+        }
+    }
+
     pub fn set(&mut self, value: T) {
         self.0 = Some(CacheIslandInternal::with_value(value))
     }
