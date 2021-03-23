@@ -1,6 +1,10 @@
-use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+use async_cell_lock::AsyncOnceCell;
+use std::{
+    future::Future,
+    sync::atomic::{AtomicU64, Ordering::Relaxed},
+};
 
-pub struct CacheIsland<T>(Option<CacheIslandInternal<T>>);
+pub struct CacheIsland<T>(AsyncOnceCell<CacheIslandInternal<T>>);
 
 struct CacheIslandInternal<T> {
     age: AtomicU64,
@@ -31,21 +35,23 @@ impl<T> CacheIsland<T> {
     }
 
     pub fn with_value(value: T) -> Self {
-        Self(Some(CacheIslandInternal::with_value(value)))
+        Self(AsyncOnceCell::with_val(CacheIslandInternal::with_value(
+            value,
+        )))
     }
 
     pub fn clear(&mut self) {
-        self.0 = None;
+        self.0.take();
     }
 
     pub fn clear_if_untouched_since(&mut self, age: u64) {
-        if self.0.as_mut().map_or(false, |v| *v.age.get_mut() <= age) {
-            self.0 = None;
+        if self.0.get_mut().map_or(false, |v| *v.age.get_mut() <= age) {
+            self.0.take();
         }
     }
 
     pub fn get(&self) -> Option<&T> {
-        match self.0.as_ref() {
+        match self.0.get() {
             Some(v) => {
                 v.age.store(CACHE_ISLAND_AGE.fetch_add(1, Relaxed), Relaxed);
                 Some(&v.value)
@@ -55,7 +61,7 @@ impl<T> CacheIsland<T> {
     }
 
     pub fn get_mut(&mut self) -> Option<&mut T> {
-        match self.0.as_mut() {
+        match self.0.get_mut() {
             Some(v) => {
                 v.age.store(CACHE_ISLAND_AGE.fetch_add(1, Relaxed), Relaxed);
                 Some(&mut v.value)
@@ -64,8 +70,22 @@ impl<T> CacheIsland<T> {
         }
     }
 
-    pub fn set(&mut self, value: T) {
-        self.0 = Some(CacheIslandInternal::with_value(value))
+    pub async fn get_or_try_init_async<F, E>(&self, f: F) -> Result<&T, E>
+    where
+        F: Future<Output = Result<T, E>>,
+    {
+        let v = self
+            .0
+            .get_or_try_init(async { Ok(CacheIslandInternal::with_value(f.await?)) })
+            .await?;
+
+        Ok(&v.value)
+    }
+
+    pub fn replace(&mut self, value: T) -> Option<T> {
+        self.0
+            .swap(Some(CacheIslandInternal::with_value(value)))
+            .map(|v| v.value)
     }
 }
 
@@ -74,16 +94,16 @@ where
     T: Clone,
 {
     fn clone(&self) -> Self {
-        Self(match self.0.as_ref() {
-            Some(v) => Some(CacheIslandInternal::with_value(v.value.clone())),
-            None => None,
+        Self(match self.0.get() {
+            Some(v) => AsyncOnceCell::with_val(CacheIslandInternal::with_value(v.value.clone())),
+            None => AsyncOnceCell::new(),
         })
     }
 }
 
 impl<T> Default for CacheIsland<T> {
     fn default() -> Self {
-        Self(None)
+        Self(AsyncOnceCell::default())
     }
 }
 
@@ -92,7 +112,7 @@ where
     T: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
-        &self.0 == &other.0
+        self.0.get() == other.0.get()
     }
 }
 
