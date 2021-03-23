@@ -16,6 +16,15 @@ impl<T> CacheIslandInternal<T> {
     }
 }
 
+impl<T> PartialEq for CacheIslandInternal<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        &self.value == &other.value
+    }
+}
+
 impl<T> CacheIsland<T> {
     pub fn new() -> Self {
         Default::default()
@@ -75,6 +84,15 @@ where
 impl<T> Default for CacheIsland<T> {
     fn default() -> Self {
         Self(None)
+    }
+}
+
+impl<T> PartialEq for CacheIsland<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        &self.0 == &other.0
     }
 }
 
