@@ -117,3 +117,7 @@ where
 }
 
 static CACHE_ISLAND_AGE: AtomicU64 = AtomicU64::new(0);
+
+pub fn current_cache_island_age() -> u64 {
+    CACHE_ISLAND_AGE.load(Relaxed)
+}

@@ -14,7 +14,7 @@ use std::{
     sync::atomic::AtomicU64,
 };
 
-pub use cache_island::CacheIsland;
+pub use cache_island::{current_cache_island_age, CacheIsland};
 pub use util::find_lru_item_to_remove;
 
 pub struct Cache<K, V, S = RandomState> {
