@@ -25,7 +25,7 @@ where
     T: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
-        &self.value == &other.value
+        self.value == other.value
     }
 }
 
@@ -44,9 +44,11 @@ impl<T> CacheIsland<T> {
         self.0.take();
     }
 
-    pub fn clear_if_untouched_since(&mut self, age: u64) {
+    pub fn clear_if_untouched_since(&mut self, age: u64) -> bool {
         if self.0.get_mut().map_or(false, |v| *v.age.get_mut() <= age) {
-            self.0.take();
+            self.0.take().is_some()
+        } else {
+            false
         }
     }
 
