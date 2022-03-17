@@ -14,7 +14,7 @@ use std::{
     sync::atomic::AtomicU64,
 };
 
-pub use cache_island::{current_cache_island_age, CacheIsland};
+pub use cache_island::CacheIsland;
 pub use util::find_lru_item_to_remove;
 
 pub struct Cache<K, V, S = RandomState> {
@@ -339,7 +339,7 @@ pub struct CacheItem<'a, K, V> {
 
 impl<'a, K, V> CacheItem<'a, K, V> {
     pub fn key(&self) -> &'a K {
-        &self.item.0
+        self.item.0
     }
 
     pub fn touch_value(&self) -> &'a V {
@@ -368,7 +368,7 @@ pub struct CacheItemMut<'a, K, V> {
 
 impl<'a, K, V> CacheItemMut<'a, K, V> {
     pub fn key(&self) -> &'a K {
-        &self.item.0
+        self.item.0
     }
 
     pub fn touch_value(&mut self) -> &mut V {
@@ -442,7 +442,7 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     fn next(&mut self) -> Option<Self::Item> {
         Some(CacheItem {
             item: self.it.next()?,
-            lru: &self.lru,
+            lru: self.lru,
         })
     }
 
@@ -469,7 +469,7 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
     fn next(&mut self) -> Option<Self::Item> {
         Some(CacheItemMut {
             item: self.it.next()?,
-            lru: &self.lru,
+            lru: self.lru,
         })
     }
 
@@ -509,7 +509,7 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(CacheValue {
-            lru: &self.lru,
+            lru: self.lru,
             rec: self.it.next()?,
         })
     }
