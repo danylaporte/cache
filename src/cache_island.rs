@@ -69,6 +69,7 @@ impl<T> CacheIsland<T> {
             .get_or_try_init(async { Ok(CacheIslandInternal::with_value(f.await?)) })
             .await?;
 
+        v.touched.store(true, Relaxed);
         Ok(&v.value)
     }
 
@@ -86,7 +87,7 @@ impl<T> CacheIsland<T> {
     pub fn untouch(&self) -> bool {
         self.0
             .get()
-            .map_or(false, |item| item.touched.swap(false, Relaxed))
+            .map_or(false, |v| v.touched.swap(false, Relaxed))
     }
 }
 
