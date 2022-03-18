@@ -40,10 +40,6 @@ impl<T> CacheIsland<T> {
         )))
     }
 
-    pub fn clear(&mut self) {
-        self.0.take();
-    }
-
     pub fn get(&self) -> Option<&T> {
         match self.0.get() {
             Some(v) => {
@@ -80,6 +76,10 @@ impl<T> CacheIsland<T> {
         self.0
             .swap(Some(CacheIslandInternal::with_value(value)))
             .map(|v| v.value)
+    }
+
+    pub fn take(&mut self) -> Option<T> {
+        self.0.take().map(|inner| inner.value)
     }
 
     /// Make the value untouched and returns true if the value was touched.
