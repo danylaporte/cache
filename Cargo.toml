@@ -6,5 +6,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
-async-cell-lock = { git = "https://github.com/danylaporte/async-cell-lock.git", branch = "main" }
-paged = { git = "https://github.com/danylaporte/paged.git", branch = "main" }
+async-cell-lock = { git = "https://github.com/danylaporte/async-cell-lock.git" }
+paged = { git = "https://github.com/danylaporte/paged.git" }
