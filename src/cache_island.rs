@@ -73,6 +73,10 @@ impl<T> CacheIsland<T> {
         Ok(&v.value)
     }
 
+    pub fn is_some(&self) -> bool {
+        self.0.get().is_some()
+    }
+
     pub fn replace(&mut self, value: T) -> Option<T> {
         self.0
             .swap(Some(CacheIslandInternal::with_value(value)))
