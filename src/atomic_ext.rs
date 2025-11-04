@@ -8,15 +8,12 @@ pub(crate) trait AtomicU64Ext {
     fn inc(&self) -> u64;
 
     /// Adds to the current value, returning the previous value.
-
     fn inc_mut(&mut self) -> u64;
 
     /// Set the value.
-
     fn set(&self, val: u64);
 
     /// Set the value.
-
     fn set_mut(&mut self, val: u64);
 }
 

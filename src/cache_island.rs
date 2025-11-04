@@ -89,9 +89,7 @@ impl<T> CacheIsland<T> {
 
     /// Make the value untouched and returns true if the value was touched.
     pub fn untouch(&self) -> bool {
-        self.0
-            .get()
-            .map_or(false, |v| v.touched.swap(false, Relaxed))
+        self.0.get().is_some_and(|v| v.touched.swap(false, Relaxed))
     }
 }
 

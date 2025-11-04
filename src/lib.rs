@@ -52,14 +52,14 @@ impl<K, V, S> Cache<K, V, S> {
         self.map.is_empty()
     }
 
-    pub fn iter(&self) -> Iter<K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             it: self.map.iter(),
             lru: &self.lru,
         }
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<K, V> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
         IterMut {
             it: self.map.iter_mut(),
             lru: &self.lru,
@@ -70,14 +70,14 @@ impl<K, V, S> Cache<K, V, S> {
         self.map.len()
     }
 
-    pub fn values(&self) -> Values<K, V> {
+    pub fn values(&self) -> Values<'_, K, V> {
         Values {
             it: self.map.values(),
             lru: &self.lru,
         }
     }
 
-    pub fn values_mut(&mut self) -> ValuesMut<K, V> {
+    pub fn values_mut(&mut self) -> ValuesMut<'_, K, V> {
         ValuesMut {
             it: self.map.values_mut(),
             lru: &self.lru,
@@ -90,18 +90,18 @@ where
     K: Eq + Hash,
     S: BuildHasher,
 {
-    pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
+    pub fn contains_key<Q>(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
-        Q: Eq + Hash,
+        Q: ?Sized + Eq + Hash,
     {
         self.map.contains_key(key)
     }
 
-    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
-        Q: Eq + Hash,
+        Q: ?Sized + Eq + Hash,
     {
         match self.map.get(key) {
             Some(rec) => {
@@ -112,10 +112,10 @@ where
         }
     }
 
-    pub fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
+    pub fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
-        Q: Eq + Hash,
+        Q: ?Sized + Eq + Hash,
     {
         match self.map.get_mut(key) {
             Some(rec) => {
@@ -174,10 +174,10 @@ where
         }
     }
 
-    pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<V>
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
     where
         K: Borrow<Q>,
-        Q: Eq + Hash,
+        Q: ?Sized + Eq + Hash,
     {
         self.map.remove(key).map(|r| r.val)
     }
